@@ -37,6 +37,7 @@ public class EmployeeHandler extends FunctionInvoker<Object, Object> {
             EmployeeResponse employeeResponse = (EmployeeResponse) handleRequest(request.getBody().orElse(null), mapFunction(context, SAVE_EMPLOYEE_BEAN));
             return request.createResponseBuilder(HttpStatus.OK)
                     .body(employeeResponse)
+                    .header("Content-Type", "application/json")
                     .build();
         });
     }
@@ -54,6 +55,7 @@ public class EmployeeHandler extends FunctionInvoker<Object, Object> {
             List<EmployeeResponse> employeeResponse = (List<EmployeeResponse>) handleRequest(null, mapFunction(context, FIND_ALL_EMPLOYEE_BEAN));
             return request.createResponseBuilder(HttpStatus.OK)
                     .body(employeeResponse)
+                    .header("Content-Type", "application/json")
                     .build();
         });
     }
@@ -74,6 +76,7 @@ public class EmployeeHandler extends FunctionInvoker<Object, Object> {
                     (EmployeeResponse) handleRequest(id, mapFunction(context, FIND_EMPLOYEE_ID_BEAN));
             return request.createResponseBuilder(HttpStatus.OK)
                     .body(employeeResponse)
+                    .header("Content-Type", "application/json")
                     .build();
         });
     }
@@ -93,6 +96,7 @@ public class EmployeeHandler extends FunctionInvoker<Object, Object> {
             if (name == null || name.isBlank()) {
                 return request.createResponseBuilder(HttpStatus.BAD_REQUEST)
                         .body("Query param 'name' is required.")
+                        .header("Content-Type", "application/json")
                         .build();
             }
             @SuppressWarnings("unchecked")
@@ -100,6 +104,7 @@ public class EmployeeHandler extends FunctionInvoker<Object, Object> {
                     (List<EmployeeResponse>) handleRequest(name, mapFunction(context, FIND_EMPLOYEE_NAME_BEAN));
             return request.createResponseBuilder(HttpStatus.OK)
                     .body(employeeResponse)
+                    .header("Content-Type", "application/json")
                     .build();
         });
     }
@@ -119,6 +124,7 @@ public class EmployeeHandler extends FunctionInvoker<Object, Object> {
             handleRequest(id, mapFunction(context, DELETE_EMPLOYEE_ID_BEAN));
             return request.createResponseBuilder(HttpStatus.OK)
                     .body(Map.of("message", "Employee deleted successfully"))
+                    .header("Content-Type", "application/json")
                     .build();
         });
     }
@@ -137,12 +143,14 @@ public class EmployeeHandler extends FunctionInvoker<Object, Object> {
             if (employeeRequest == null) {
                 return request.createResponseBuilder(HttpStatus.BAD_REQUEST)
                         .body("Request body is required.")
+                        .header("Content-Type", "application/json")
                         .build();
             }
             employeeRequest = new EmployeeRequest(id, employeeRequest.name());
             EmployeeResponse employeeResponse = (EmployeeResponse) handleRequest(employeeRequest, mapFunction(context, UPDATE_EMPLOYEE_BEAN));
             return request.createResponseBuilder(HttpStatus.OK)
                     .body(employeeResponse)
+                    .header("Content-Type", "application/json")
                     .build();
         });
     }
@@ -157,6 +165,7 @@ public class EmployeeHandler extends FunctionInvoker<Object, Object> {
             if (employeeNotFoundException != null) {
                 return request.createResponseBuilder(HttpStatus.NOT_FOUND)
                         .body(Map.of("message", employeeNotFoundException.getMessage()))
+                        .header("Content-Type", "application/json")
                         .build();
             }
             throw exception;

@@ -9,5 +9,4 @@ class AzureFunctionApplicationTests {
     @Test
     void contextLoads() {
     }
-
 }
