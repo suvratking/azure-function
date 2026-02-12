@@ -56,7 +56,7 @@ For local development, create a `local.settings.json` file in the root of the pr
     "AzureWebJobsStorage": "",
     "FUNCTIONS_WORKER_RUNTIME": "java",
     "MAIN_CLASS":"com.example.azurefunction.AzureFunctionApplication",
-    "spring.datasource.url": "jdbc:postgresql://localhost:5432/your-database",
+    "spring.datasource.url": "jdbc:postgresql://localhost:5435/postgres",
     "spring.datasource.username": "your-username",
     "spring.datasource.password": "your-password",
     "spring.jpa.hibernate.ddl-auto": "update"
@@ -115,4 +115,3 @@ The following endpoints are available:
 | GET    | `/api/employees/{id}` | Get an employee by ID    |
 | PUT    | `/api/employees/{id}` | Update an employee by ID |
 | DELETE | `/api/employees/{id}` | Delete an employee by ID |
-

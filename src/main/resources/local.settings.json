@@ -4,11 +4,10 @@
     "FUNCTIONS_WORKER_RUNTIME": "java",
     "AzureWebJobsStorage": "UseDevelopmentStorage=true",
     "SPRING_PROFILES_ACTIVE": "local",
-    "SPRING_DATASOURCE_URL": "jdbc:postgresql://localhost:5432/postgres",
+    "SPRING_DATASOURCE_URL": "jdbc:postgresql://localhost:5435/postgres",
     "SPRING_DATASOURCE_DRIVER_CLASS_NAME": "org.postgresql.Driver",
     "SPRING_DATASOURCE_USERNAME": "postgres",
     "SPRING_DATASOURCE_PASSWORD": "password",
-    "SPRING_JPA_DATABASE_PLATFORM": "org.hibernate.dialect.PostgreSQLDialect",
     "SPRING_JPA_HIBERNATE_DDL_AUTO": "update",
     "SPRING_H2_CONSOLE_ENABLED": "false"
   },
