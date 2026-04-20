@@ -1,6 +1,5 @@
 package com.example.azurefunction.handler;
 
-import com.example.azurefunction.AzureFunctionApplication;
 import com.example.azurefunction.dto.EmployeeRequest;
 import com.example.azurefunction.dto.EmployeeResponse;
 import com.example.azurefunction.exception.EmployeeNotFoundException;
@@ -9,20 +8,29 @@ import com.microsoft.azure.functions.annotation.AuthorizationLevel;
 import com.microsoft.azure.functions.annotation.BindingName;
 import com.microsoft.azure.functions.annotation.FunctionName;
 import com.microsoft.azure.functions.annotation.HttpTrigger;
-import org.springframework.cloud.function.adapter.azure.FunctionInvoker;
+import org.springframework.cloud.function.adapter.azure.AzureFunctionUtil;
+import org.springframework.cloud.function.context.FunctionCatalog;
+import org.springframework.stereotype.Component;
+import tools.jackson.core.JacksonException;
+import tools.jackson.databind.ObjectMapper;
 
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.function.Function;
 import java.util.function.Supplier;
 
 import static com.example.azurefunction.utils.Constants.*;
-import static com.example.azurefunction.utils.MappingUtil.mapFunction;
 
-public class EmployeeHandler extends FunctionInvoker<Object, Object> {
+@Component
+public class EmployeeHandler {
 
-    public EmployeeHandler() {
-        super(AzureFunctionApplication.class);
+    private static final String CONTENT_TYPE_JSON = "application/json";
+    private final FunctionCatalog functionCatalog;
+    private final ObjectMapper objectMapper = new ObjectMapper();
+
+    public EmployeeHandler(FunctionCatalog functionCatalog) {
+        this.functionCatalog = functionCatalog;
     }
 
     @FunctionName("saveEmployee")
@@ -34,11 +42,9 @@ public class EmployeeHandler extends FunctionInvoker<Object, Object> {
             HttpRequestMessage<Optional<EmployeeRequest>> request, ExecutionContext context) {
         return withGlobalExceptionHandling(request, () -> {
             context.getLogger().info("Using Java (" + System.getProperty("java.version") + ")");
-            EmployeeResponse employeeResponse = (EmployeeResponse) handleRequest(request.getBody().orElse(null), mapFunction(context, SAVE_EMPLOYEE_BEAN));
-            return request.createResponseBuilder(HttpStatus.OK)
-                    .body(employeeResponse)
-                    .header("Content-Type", "application/json")
-                    .build();
+            EmployeeResponse employeeResponse =
+                    (EmployeeResponse) invokeFunction(request.getBody().orElse(null), SAVE_EMPLOYEE_BEAN, context);
+            return jsonResponse(request, HttpStatus.OK, employeeResponse);
         });
     }
 
@@ -52,11 +58,9 @@ public class EmployeeHandler extends FunctionInvoker<Object, Object> {
         return withGlobalExceptionHandling(request, () -> {
             context.getLogger().info("Using Java (" + System.getProperty("java.version") + ")");
             @SuppressWarnings("unchecked")
-            List<EmployeeResponse> employeeResponse = (List<EmployeeResponse>) handleRequest(null, mapFunction(context, FIND_ALL_EMPLOYEE_BEAN));
-            return request.createResponseBuilder(HttpStatus.OK)
-                    .body(employeeResponse)
-                    .header("Content-Type", "application/json")
-                    .build();
+            List<EmployeeResponse> employeeResponse =
+                    (List<EmployeeResponse>) invokeFunction(null, FIND_ALL_EMPLOYEE_BEAN, context);
+            return jsonResponse(request, HttpStatus.OK, employeeResponse);
         });
     }
     
@@ -73,11 +77,8 @@ public class EmployeeHandler extends FunctionInvoker<Object, Object> {
         return withGlobalExceptionHandling(request, () -> {
             context.getLogger().info("Using Java (" + System.getProperty("java.version") + ")");
             EmployeeResponse employeeResponse =
-                    (EmployeeResponse) handleRequest(id, mapFunction(context, FIND_EMPLOYEE_ID_BEAN));
-            return request.createResponseBuilder(HttpStatus.OK)
-                    .body(employeeResponse)
-                    .header("Content-Type", "application/json")
-                    .build();
+                    (EmployeeResponse) invokeFunction(id, FIND_EMPLOYEE_ID_BEAN, context);
+            return jsonResponse(request, HttpStatus.OK, employeeResponse);
         });
     }
 
@@ -94,18 +95,12 @@ public class EmployeeHandler extends FunctionInvoker<Object, Object> {
             context.getLogger().info("Using Java (" + System.getProperty("java.version") + ")");
             String name = request.getQueryParameters().get("name");
             if (name == null || name.isBlank()) {
-                return request.createResponseBuilder(HttpStatus.BAD_REQUEST)
-                        .body("Query param 'name' is required.")
-                        .header("Content-Type", "application/json")
-                        .build();
+                return jsonResponse(request, HttpStatus.BAD_REQUEST, Map.of("message", "Query param 'name' is required."));
             }
             @SuppressWarnings("unchecked")
             List<EmployeeResponse> employeeResponse =
-                    (List<EmployeeResponse>) handleRequest(name, mapFunction(context, FIND_EMPLOYEE_NAME_BEAN));
-            return request.createResponseBuilder(HttpStatus.OK)
-                    .body(employeeResponse)
-                    .header("Content-Type", "application/json")
-                    .build();
+                    (List<EmployeeResponse>) invokeFunction(name, FIND_EMPLOYEE_NAME_BEAN, context);
+            return jsonResponse(request, HttpStatus.OK, employeeResponse);
         });
     }
 
@@ -121,11 +116,8 @@ public class EmployeeHandler extends FunctionInvoker<Object, Object> {
             ExecutionContext context) {
         return withGlobalExceptionHandling(request, () -> {
             context.getLogger().info("Using Java (" + System.getProperty("java.version") + ")");
-            handleRequest(id, mapFunction(context, DELETE_EMPLOYEE_ID_BEAN));
-            return request.createResponseBuilder(HttpStatus.OK)
-                    .body(Map.of("message", "Employee deleted successfully"))
-                    .header("Content-Type", "application/json")
-                    .build();
+            invokeFunction(id, DELETE_EMPLOYEE_ID_BEAN, context);
+            return jsonResponse(request, HttpStatus.OK, Map.of("message", "Employee deleted successfully"));
         });
     }
 
@@ -141,18 +133,22 @@ public class EmployeeHandler extends FunctionInvoker<Object, Object> {
             context.getLogger().info("Using Java (" + System.getProperty("java.version") + ")");
             EmployeeRequest employeeRequest = request.getBody().orElse(null);
             if (employeeRequest == null) {
-                return request.createResponseBuilder(HttpStatus.BAD_REQUEST)
-                        .body("Request body is required.")
-                        .header("Content-Type", "application/json")
-                        .build();
+                return jsonResponse(request, HttpStatus.BAD_REQUEST, Map.of("message", "Request body is required."));
             }
             employeeRequest = new EmployeeRequest(id, employeeRequest.name());
-            EmployeeResponse employeeResponse = (EmployeeResponse) handleRequest(employeeRequest, mapFunction(context, UPDATE_EMPLOYEE_BEAN));
-            return request.createResponseBuilder(HttpStatus.OK)
-                    .body(employeeResponse)
-                    .header("Content-Type", "application/json")
-                    .build();
+            EmployeeResponse employeeResponse =
+                    (EmployeeResponse) invokeFunction(employeeRequest, UPDATE_EMPLOYEE_BEAN, context);
+            return jsonResponse(request, HttpStatus.OK, employeeResponse);
         });
+    }
+
+    protected Object invokeFunction(Object input, String beanName, ExecutionContext context) {
+        @SuppressWarnings("unchecked")
+        Function<Object, Object> function = (Function<Object, Object>) functionCatalog.lookup(beanName);
+        if (function == null) {
+            throw new IllegalStateException("No Spring Cloud Function bean found for '" + beanName + "'");
+        }
+        return function.apply(AzureFunctionUtil.enhanceInputIfNecessary(input, context));
     }
 
     private HttpResponseMessage withGlobalExceptionHandling(
@@ -163,12 +159,25 @@ public class EmployeeHandler extends FunctionInvoker<Object, Object> {
         } catch (Exception exception) {
             EmployeeNotFoundException employeeNotFoundException = findEmployeeNotFoundException(exception);
             if (employeeNotFoundException != null) {
-                return request.createResponseBuilder(HttpStatus.NOT_FOUND)
-                        .body(Map.of("message", employeeNotFoundException.getMessage()))
-                        .header("Content-Type", "application/json")
-                        .build();
+                return jsonResponse(request, HttpStatus.NOT_FOUND,
+                        Map.of("message", employeeNotFoundException.getMessage()));
             }
             throw exception;
+        }
+    }
+
+    private HttpResponseMessage jsonResponse(HttpRequestMessage<?> request, HttpStatusType status, Object payload) {
+        return request.createResponseBuilder(status)
+                .header("Content-Type", CONTENT_TYPE_JSON)
+                .body(toJson(payload))
+                .build();
+    }
+
+    private String toJson(Object payload) {
+        try {
+            return objectMapper.writeValueAsString(payload);
+        } catch (JacksonException exception) {
+            throw new IllegalStateException("Failed to serialize function response", exception);
         }
     }
 

@@ -4,12 +4,13 @@
     "FUNCTIONS_WORKER_RUNTIME": "java",
     "AzureWebJobsStorage": "UseDevelopmentStorage=true",
     "SPRING_PROFILES_ACTIVE": "local",
-    "SPRING_DATASOURCE_URL": "jdbc:postgresql://localhost:5435/postgres",
-    "SPRING_DATASOURCE_DRIVER_CLASS_NAME": "org.postgresql.Driver",
-    "SPRING_DATASOURCE_USERNAME": "postgres",
-    "SPRING_DATASOURCE_PASSWORD": "password",
+    "SPRING_DATASOURCE_URL": "jdbc:h2:mem:azure-function;MODE=PostgreSQL;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE;INIT=CREATE SCHEMA IF NOT EXISTS azure\\;SET SCHEMA azure",
+    "SPRING_DATASOURCE_DRIVER_CLASS_NAME": "org.h2.Driver",
+    "SPRING_DATASOURCE_USERNAME": "sa",
+    "SPRING_DATASOURCE_PASSWORD": "",
+    "SPRING_JPA_DATABASE_PLATFORM": "org.hibernate.dialect.H2Dialect",
     "SPRING_JPA_HIBERNATE_DDL_AUTO": "update",
-    "SPRING_H2_CONSOLE_ENABLED": "false"
+    "SPRING_H2_CONSOLE_ENABLED": "true"
   },
 
   "Host": {

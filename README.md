@@ -47,22 +47,26 @@ This project is a serverless CRUD application built using Java, Spring Boot, and
 
 ### Local Development
 
-For local development, create a `local.settings.json` file in the root of the project with the following content:
+For local development, the repo is set up to run with an in-memory H2 database by default. The root `local.settings.json` already contains a working local configuration. The important values are:
 
 ```json
 {
   "IsEncrypted": false,
   "Values": {
-    "AzureWebJobsStorage": "",
+    "AzureWebJobsStorage": "UseDevelopmentStorage=true",
     "FUNCTIONS_WORKER_RUNTIME": "java",
-    "MAIN_CLASS":"com.example.azurefunction.AzureFunctionApplication",
-    "spring.datasource.url": "jdbc:postgresql://localhost:5435/postgres",
-    "spring.datasource.username": "your-username",
-    "spring.datasource.password": "your-password",
-    "spring.jpa.hibernate.ddl-auto": "update"
+    "SPRING_PROFILES_ACTIVE": "local",
+    "SPRING_DATASOURCE_URL": "jdbc:h2:mem:azure-function;MODE=PostgreSQL;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE;INIT=CREATE SCHEMA IF NOT EXISTS azure\\;SET SCHEMA azure",
+    "SPRING_DATASOURCE_DRIVER_CLASS_NAME": "org.h2.Driver",
+    "SPRING_DATASOURCE_USERNAME": "sa",
+    "SPRING_DATASOURCE_PASSWORD": "",
+    "SPRING_JPA_DATABASE_PLATFORM": "org.hibernate.dialect.H2Dialect",
+    "SPRING_JPA_HIBERNATE_DDL_AUTO": "update"
   }
 }
 ```
+
+If you want to use PostgreSQL instead, override those `SPRING_DATASOURCE_*` values in `local.settings.json` with your real connection details before running the function.
 
 ### Azure Deployment
 
@@ -80,7 +84,7 @@ The Azure deployment is configured in the `pom.xml` file within the `azure-funct
     - Java 21
     - Maven
     - Azure Functions Core Tools
-    - PostgreSQL database running locally or on a remote server.
+    - No external database is required for the default local setup.
 
 2.  **Build the project:**
     ```bash
